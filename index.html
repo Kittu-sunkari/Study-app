@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Study Focus">
+<title>Ramakrishna — Study Focus App</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Sora:wght@300;400;600;700&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --card: #1a1a24;
+    --border: #2a2a3a;
+    --accent: #00e5a0;
+    --accent2: #7c6cfa;
+    --warn: #f5a623;
+    --danger: #ff5a5a;
+    --text: #f0f0f5;
+    --muted: #6b6b80;
+    --mono: 'Space Mono', monospace;
+    --sans: 'Sora', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* TOP NAV */
+  .nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px 12px;
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 100;
+    background: var(--bg);
+  }
+  .nav-title { font-size: 13px; font-weight: 600; color: var(--accent); letter-spacing: 2px; text-transform: uppercase; font-family: var(--mono); }
+  .nav-date { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+
+  /* BOTTOM NAV */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex;
+    z-index: 100;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .nav-btn {
+    flex: 1; padding: 12px 4px 8px;
+    background: none; border: none; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    color: var(--muted); font-size: 10px; font-family: var(--sans);
+    transition: color 0.2s;
+  }
+  .nav-btn.active { color: var(--accent); }
+  .nav-btn svg { width: 20px; height: 20px; }
+
+  /* PAGES */
+  .page { display: none; padding: 20px 16px 100px; }
+  .page.active { display: block; }
+
+  /* TIMER PAGE */
+  .timer-wrap {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 20px 0 0;
+  }
+  .mode-chips {
+    display: flex; gap: 8px; margin-bottom: 32px; flex-wrap: wrap; justify-content: center;
+  }
+  .chip {
+    padding: 6px 16px; border-radius: 20px; font-size: 12px; cursor: pointer;
+    border: 1px solid var(--border); background: var(--card); color: var(--muted);
+    transition: all 0.2s; font-family: var(--sans);
+  }
+  .chip.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
+
+  .timer-ring-wrap {
+    position: relative; width: 240px; height: 240px; margin-bottom: 28px;
+  }
+  .timer-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .timer-bg { fill: none; stroke: var(--border); stroke-width: 8; }
+  .timer-prog { fill: none; stroke: var(--accent); stroke-width: 8; stroke-linecap: round;
+    transition: stroke-dashoffset 1s linear; }
+  .timer-center {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .timer-display {
+    font-family: var(--mono); font-size: 48px; font-weight: 700; color: var(--text);
+    letter-spacing: -2px;
+  }
+  .timer-label { font-size: 12px; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 1px; }
+
+  .timer-controls { display: flex; gap: 16px; margin-bottom: 24px; }
+  .ctrl-btn {
+    width: 64px; height: 64px; border-radius: 50%; border: none; cursor: pointer;
+    font-size: 24px; display: flex; align-items: center; justify-content: center;
+    transition: transform 0.15s, opacity 0.15s;
+  }
+  .ctrl-btn:active { transform: scale(0.93); }
+  .ctrl-btn.play { background: var(--accent); color: #000; width: 72px; height: 72px; font-size: 28px; }
+  .ctrl-btn.reset { background: var(--card); color: var(--muted); border: 1px solid var(--border); }
+
+  .session-count {
+    font-size: 13px; color: var(--muted); font-family: var(--mono);
+    background: var(--card); padding: 8px 20px; border-radius: 20px; border: 1px solid var(--border);
+  }
+  .session-count span { color: var(--accent); font-weight: 700; }
+
+  /* TODAY PAGE */
+  .day-header {
+    background: linear-gradient(135deg, #1a1a24 0%, #1e1a2e 100%);
+    border-radius: 16px; padding: 20px; margin-bottom: 20px;
+    border: 1px solid var(--border);
+  }
+  .day-header h2 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+  .day-header p { font-size: 13px; color: var(--muted); }
+  .day-progress-bar {
+    height: 6px; background: var(--border); border-radius: 3px; margin-top: 14px; overflow: hidden;
+  }
+  .day-progress-fill {
+    height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.4s;
+  }
+  .day-progress-label { font-size: 11px; color: var(--muted); margin-top: 6px; font-family: var(--mono); }
+
+  .section-title {
+    font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: 2px;
+    text-transform: uppercase; margin: 20px 0 10px; font-family: var(--mono);
+  }
+
+  .task-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 14px 16px; margin-bottom: 10px; display: flex; gap: 14px; align-items: flex-start;
+    cursor: pointer; transition: border-color 0.2s, opacity 0.2s;
+    -webkit-user-select: none; user-select: none;
+  }
+  .task-card.done { opacity: 0.45; }
+  .task-card.done .task-name { text-decoration: line-through; }
+  .task-check {
+    width: 22px; height: 22px; border-radius: 6px; border: 1.5px solid var(--border);
+    flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    margin-top: 1px; transition: all 0.2s;
+  }
+  .task-check.done { background: var(--accent); border-color: var(--accent); }
+  .task-check.done::after {
+    content: ''; width: 5px; height: 9px;
+    border: 2px solid #000; border-top: none; border-left: none;
+    transform: rotate(45deg) translateY(-1px); display: block;
+  }
+  .task-name { font-size: 14px; color: var(--text); font-weight: 400; line-height: 1.5; }
+  .task-tag { font-size: 10px; color: var(--accent); margin-top: 4px; font-family: var(--mono); }
+
+  /* WEEK PLAN */
+  .week-selector {
+    display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 16px;
+    scrollbar-width: none;
+  }
+  .week-selector::-webkit-scrollbar { display: none; }
+  .week-pill {
+    flex-shrink: 0; padding: 7px 14px; border-radius: 20px;
+    border: 1px solid var(--border); background: var(--card); color: var(--muted);
+    font-size: 12px; cursor: pointer; font-family: var(--sans); transition: all 0.2s;
+  }
+  .week-pill.active { background: var(--accent2); color: white; border-color: var(--accent2); font-weight: 600; }
+
+  .week-info-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    padding: 16px; margin-bottom: 16px;
+  }
+  .week-info-card h3 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  .week-info-card p { font-size: 13px; color: var(--muted); line-height: 1.5; }
+  .phase-badge {
+    display: inline-block; font-size: 10px; padding: 3px 10px; border-radius: 10px;
+    margin-bottom: 10px; font-weight: 600; font-family: var(--mono); letter-spacing: 0.5px;
+  }
+
+  /* STATS */
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+  .stat-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    padding: 16px; text-align: center;
+  }
+  .stat-num { font-size: 32px; font-weight: 700; font-family: var(--mono); color: var(--accent); }
+  .stat-label { font-size: 11px; color: var(--muted); margin-top: 4px; letter-spacing: 0.5px; }
+
+  .streak-card {
+    background: linear-gradient(135deg, #1a1a24 0%, #1e1a2e 100%);
+    border: 1px solid var(--accent2); border-radius: 14px;
+    padding: 20px; text-align: center; margin-bottom: 16px;
+  }
+  .streak-fire { font-size: 40px; margin-bottom: 8px; }
+  .streak-num { font-size: 48px; font-weight: 700; font-family: var(--mono); color: var(--accent2); }
+  .streak-label { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+  .motivate-card {
+    background: var(--card); border-left: 3px solid var(--accent); border-radius: 0 12px 12px 0;
+    padding: 14px 16px; margin-bottom: 10px;
+    font-size: 14px; color: var(--text); line-height: 1.6;
+    font-style: italic;
+  }
+
+  .add-task-area {
+    background: var(--card); border: 1px dashed var(--border); border-radius: 12px;
+    padding: 14px 16px; margin-top: 8px; display: flex; gap: 10px; align-items: center;
+  }
+  .add-input {
+    flex: 1; background: none; border: none; color: var(--text); font-size: 14px;
+    font-family: var(--sans); outline: none;
+  }
+  .add-input::placeholder { color: var(--muted); }
+  .add-btn {
+    background: var(--accent); color: #000; border: none; border-radius: 8px;
+    padding: 8px 14px; font-weight: 600; font-size: 13px; cursor: pointer;
+    font-family: var(--sans);
+  }
+
+  .alarm-section { margin-top: 8px; }
+  .alarm-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 14px 16px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;
+  }
+  .alarm-time { font-size: 22px; font-weight: 700; font-family: var(--mono); color: var(--accent); }
+  .alarm-name { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .toggle {
+    width: 44px; height: 24px; border-radius: 12px; background: var(--border);
+    position: relative; cursor: pointer; transition: background 0.2s;
+  }
+  .toggle.on { background: var(--accent); }
+  .toggle-dot {
+    position: absolute; top: 3px; left: 3px; width: 18px; height: 18px;
+    border-radius: 50%; background: white; transition: left 0.2s;
+  }
+  .toggle.on .toggle-dot { left: 23px; }
+
+  .perm-banner {
+    background: #1e1a10; border: 1px solid var(--warn); border-radius: 10px;
+    padding: 12px 14px; margin-bottom: 16px; font-size: 12px; color: var(--warn); line-height: 1.5;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--accent); color: #000; padding: 10px 20px; border-radius: 20px;
+    font-size: 13px; font-weight: 600; opacity: 0; pointer-events: none;
+    transition: all 0.3s; z-index: 200; white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <span class="nav-title">StudyFocus</span>
+  <span class="nav-date" id="nav-date"></span>
+</div>
+
+<!-- PAGES -->
+<div class="page active" id="page-timer">
+  <div class="timer-wrap">
+    <div class="mode-chips">
+      <div class="chip active" onclick="setMode('focus',25,'Focus time')" id="chip-focus">25 min Focus</div>
+      <div class="chip" onclick="setMode('short',5,'Short break')" id="chip-short">5 min Break</div>
+      <div class="chip" onclick="setMode('long',15,'Long break')" id="chip-long">15 min Rest</div>
+    </div>
+
+    <div class="timer-ring-wrap">
+      <svg class="timer-svg" viewBox="0 0 240 240">
+        <circle class="timer-bg" cx="120" cy="120" r="108"/>
+        <circle class="timer-prog" id="timer-ring" cx="120" cy="120" r="108"
+          stroke-dasharray="678.6" stroke-dashoffset="0"/>
+      </svg>
+      <div class="timer-center">
+        <div class="timer-display" id="timer-display">25:00</div>
+        <div class="timer-label" id="timer-label">Focus time</div>
+      </div>
+    </div>
+
+    <div class="timer-controls">
+      <button class="ctrl-btn reset" onclick="resetTimer()">↺</button>
+      <button class="ctrl-btn play" id="play-btn" onclick="toggleTimer()">▶</button>
+      <button class="ctrl-btn reset" onclick="skipTimer()">⏭</button>
+    </div>
+
+    <div class="session-count">Sessions today: <span id="session-count">0</span></div>
+  </div>
+</div>
+
+<div class="page" id="page-today">
+  <div class="day-header">
+    <h2 id="today-heading">Today's Mission</h2>
+    <p id="today-sub">Complete your tasks. Every check counts.</p>
+    <div class="day-progress-bar">
+      <div class="day-progress-fill" id="today-prog-fill" style="width:0%"></div>
+    </div>
+    <div class="day-progress-label" id="today-prog-label">0 / 0 tasks done</div>
+  </div>
+
+  <div class="section-title">Daily tasks</div>
+  <div id="today-tasks"></div>
+
+  <div class="section-title">Add custom task</div>
+  <div class="add-task-area">
+    <input class="add-input" id="custom-input" placeholder="e.g. Read JS chapter 3..." maxlength="80"/>
+    <button class="add-btn" onclick="addCustomTask()">Add</button>
+  </div>
+</div>
+
+<div class="page" id="page-plan">
+  <div class="week-selector" id="week-selector"></div>
+  <div id="week-detail"></div>
+</div>
+
+<div class="page" id="page-stats">
+  <div class="streak-card">
+    <div class="streak-fire">🔥</div>
+    <div class="streak-num" id="streak-num">0</div>
+    <div class="streak-label">day streak — don't break the chain</div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-num" id="stat-sessions">0</div>
+      <div class="stat-label">Focus sessions</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="stat-tasks">0</div>
+      <div class="stat-label">Tasks done</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="stat-hours">0h</div>
+      <div class="stat-label">Study hours</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="stat-days">0</div>
+      <div class="stat-label">Days active</div>
+    </div>
+  </div>
+
+  <div class="section-title">Daily reminders</div>
+  <div class="perm-banner">
+    To get notification alerts, open this file in Chrome on Android, tap the menu (⋮) → "Add to Home Screen". Then allow notifications when prompted.
+  </div>
+  <div class="alarm-section" id="alarm-list"></div>
+
+  <div class="section-title">Words for hard days</div>
+  <div class="motivate-card">"The robbery took your laptop. It did not take your brain, your hunger, or your story. You showed up anyway. That is already rare."</div>
+  <div class="motivate-card">"Every senior developer was once confused by the same JavaScript error you're looking at right now."</div>
+  <div class="motivate-card">"One focused hour beats ten distracted ones. Close the tab. Start the timer."</div>
+  <div class="motivate-card">"You are not behind. You are exactly where your journey has brought you. Now move."</div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <button class="nav-btn active" id="nav-timer" onclick="showPage('timer')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+    Timer
+  </button>
+  <button class="nav-btn" id="nav-today" onclick="showPage('today')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9,11 12,14 22,4"/><path d="M21,12v7a2,2,0,0,1-2,2H5a2,2,0,0,1-2-2V5A2,2,0,0,1,5,3h11"/></svg>
+    Today
+  </button>
+  <button class="nav-btn" id="nav-plan" onclick="showPage('plan')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Plan
+  </button>
+  <button class="nav-btn" id="nav-stats" onclick="showPage('stats')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/></svg>
+    Stats
+  </button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const WEEKS = [
+  { num:1, dates:"Apr 1–7", phase:"Skill up", color:"#00e5a0",
+    focus:"Fix profiles + Restart JavaScript from scratch",
+    tasks:[
+      "Update LinkedIn headline — remove React, add honest skills",
+      "Complete javascript.info Part 1: chapters 1–4 (variables, types, operators)",
+      "Complete javascript.info Part 1: chapters 5–6 (functions, loops)",
+      "Build a simple calculator — HTML + CSS + JS only",
+      "Add GitHub profile README introducing yourself"
+    ]
+  },
+  { num:2, dates:"Apr 8–14", phase:"Skill up", color:"#00e5a0",
+    focus:"DOM manipulation + Build portfolio website",
+    tasks:[
+      "Complete javascript.info: DOM manipulation + events (chapters 7–10)",
+      "Start building personal portfolio site (HTML + CSS + JS)",
+      "Portfolio must have: About, Skills, Projects, Contact",
+      "Deploy portfolio live on GitHub Pages (free)",
+      "Add portfolio link to LinkedIn and GitHub bio"
+    ]
+  },
+  { num:3, dates:"Apr 15–21", phase:"Build + Apply", color:"#f5a623",
+    focus:"Project #2 + Start 10 applications per day",
+    tasks:[
+      "Build To-Do app with add, delete, complete — pure JS",
+      "Write proper README for every GitHub project",
+      "Send 10 job applications — Naukri + LinkedIn + Indeed",
+      "Set job alerts: 'Frontend Developer', 'Web Developer fresher'",
+      "Record yourself answering 'tell me about yourself' — 3 takes"
+    ]
+  },
+  { num:4, dates:"Apr 22–28", phase:"Build + Apply", color:"#f5a623",
+    focus:"Project #3 + SQL revision + 50 total applications",
+    tasks:[
+      "Build Weather app using free OpenWeatherMap API",
+      "Revise SQL: SELECT, WHERE, JOIN, GROUP BY",
+      "Apply to 10 jobs per day — 50 total by end of week",
+      "Message 5 junior developers on LinkedIn for advice",
+      "Prepare: why gap in career? why leave Wipro? why developer?"
+    ]
+  },
+  { num:5, dates:"Apr 29–May 5", phase:"Interview prep", color:"#7c6cfa",
+    focus:"Technical interview preparation begins",
+    tasks:[
+      "Study top 15 JavaScript interview questions (interviewbit.com)",
+      "Study top 10 HTML/CSS interview questions — write answers",
+      "Practice 2 HackerRank Easy problems per day",
+      "Continue 10 job applications per day",
+      "Follow up on all Week 3–4 applications via email or LinkedIn"
+    ]
+  },
+  { num:6, dates:"May 6–12", phase:"Interview prep", color:"#7c6cfa",
+    focus:"Mock interviews + Walk-in drives",
+    tasks:[
+      "Do full mock interview — answer 10 JS questions out loud, record it",
+      "Search walk-in drives: Hyderabad / Vizag / Vijayawada",
+      "Attend at least 1 walk-in drive or virtual hiring event",
+      "Update resume and share with Claude for review",
+      "Continue 10 applications per day — 100+ total by now"
+    ]
+  },
+  { num:7, dates:"May 13–19", phase:"Convert to offer", color:"#ff5a5a",
+    focus:"Push hard — every interview is practice",
+    tasks:[
+      "Revise all interview Q&A notes — 1 hour daily minimum",
+      "Attend every interview — do not cancel or postpone any",
+      "After each interview — write what was asked, share with Claude",
+      "Apply to IT staffing agencies: TeamLease, Quess Corp, Manpower",
+      "Continue 10 applications per day — never stop"
+    ]
+  },
+  { num:8, dates:"May 20–31", phase:"Land the job", color:"#ff5a5a",
+    focus:"Negotiate smart, accept the first reasonable offer",
+    tasks:[
+      "Review and negotiate any offer received — ask Claude to help",
+      "Expand search if needed: QA, IT support, junior analyst roles",
+      "Apply to TCS, Infosys, Wipro, Cognizant fresher programs",
+      "Continue all applications until first day at work",
+      "Celebrate — you built 3+ live projects and 100+ applications"
+    ]
+  }
+];
+
+const TODAY_TASKS = [
+  { text: "Open javascript.info and study for 2+ hours", tag: "javascript.info" },
+  { text: "Complete at least 1 chapter from JS fundamentals", tag: "Core skill" },
+  { text: "Practice: write code from memory, not copy-paste", tag: "Habit" },
+  { text: "Review yesterday's code for 15 minutes", tag: "Reinforcement" },
+  { text: "Write 3 things you learned today in a notebook", tag: "Daily habit" }
+];
+
+const ALARMS = [
+  { time: "07:00", name: "Good morning — start your study session", id: "a1" },
+  { time: "10:30", name: "Mid-morning check — still on track?", id: "a2" },
+  { time: "14:00", name: "Afternoon focus block begins", id: "a3" },
+  { time: "17:00", name: "Apply to jobs now — 10 minimum", id: "a4" },
+  { time: "21:00", name: "Log what you learned today", id: "a5" }
+];
+
+let state = JSON.parse(localStorage.getItem('rk_focus_state') || '{}');
+if (!state.sessions) state.sessions = 0;
+if (!state.totalTasks) state.totalTasks = 0;
+if (!state.totalMinutes) state.totalMinutes = 0;
+if (!state.streak) state.streak = 0;
+if (!state.daysActive) state.daysActive = 0;
+if (!state.lastDate) state.lastDate = '';
+if (!state.todayChecked) state.todayChecked = {};
+if (!state.customTasks) state.customTasks = [];
+if (!state.alarmStates) state.alarmStates = {};
+function save() { localStorage.setItem('rk_focus_state', JSON.stringify(state)); }
+
+// Check streak
+const todayStr = new Date().toDateString();
+if (state.lastDate !== todayStr) {
+  const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1);
+  if (state.lastDate !== yesterday.toDateString()) state.streak = 0;
+}
+
+// Timer
+let timerInterval = null, timerRunning = false;
+let timerDuration = 25*60, timerRemaining = 25*60, timerMode = 'focus';
+const CIRCUMFERENCE = 2 * Math.PI * 108;
+
+function setMode(mode, mins, label) {
+  if (timerRunning) return;
+  timerMode = mode; timerDuration = mins*60; timerRemaining = mins*60;
+  document.getElementById('timer-label').textContent = label;
+  ['focus','short','long'].forEach(m => document.getElementById('chip-'+m).classList.remove('active'));
+  document.getElementById('chip-'+mode).classList.add('active');
+  const ring = document.getElementById('timer-ring');
+  ring.style.stroke = mode==='focus'?'#00e5a0': mode==='short'?'#7c6cfa':'#f5a623';
+  updateDisplay();
+}
+
+function updateDisplay() {
+  const m = String(Math.floor(timerRemaining/60)).padStart(2,'0');
+  const s = String(timerRemaining%60).padStart(2,'0');
+  document.getElementById('timer-display').textContent = m+':'+s;
+  const pct = timerRemaining/timerDuration;
+  document.getElementById('timer-ring').style.strokeDashoffset = CIRCUMFERENCE*(1-pct);
+}
+
+function toggleTimer() {
+  if (timerRunning) {
+    clearInterval(timerInterval); timerRunning = false;
+    document.getElementById('play-btn').textContent = '▶';
+  } else {
+    timerRunning = true;
+    document.getElementById('play-btn').textContent = '⏸';
+    timerInterval = setInterval(() => {
+      timerRemaining--;
+      updateDisplay();
+      if (timerRemaining <= 0) {
+        clearInterval(timerInterval); timerRunning = false;
+        document.getElementById('play-btn').textContent = '▶';
+        if (timerMode === 'focus') {
+          state.sessions++; state.totalMinutes += timerDuration/60;
+          markTodayActive(); save();
+          document.getElementById('session-count').textContent = state.sessions;
+          updateStats();
+          showToast('Focus session complete! Great work Ramakrishna!');
+          try { new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAA...').play(); } catch(e) {}
+        }
+        timerRemaining = timerDuration; updateDisplay();
+      }
+    }, 1000);
+  }
+}
+
+function resetTimer() {
+  clearInterval(timerInterval); timerRunning = false;
+  document.getElementById('play-btn').textContent = '▶';
+  timerRemaining = timerDuration; updateDisplay();
+}
+function skipTimer() { resetTimer(); }
+updateDisplay();
+
+// Today tasks
+function renderTodayTasks() {
+  const all = [...TODAY_TASKS.map((t,i)=>({...t,id:'fixed_'+i})), ...state.customTasks.map((t,i)=>({text:t,tag:'Custom',id:'custom_'+i}))];
+  let done = 0;
+  const html = all.map(t => {
+    const isDone = !!state.todayChecked[t.id];
+    if (isDone) done++;
+    return `<div class="task-card ${isDone?'done':''}" onclick="toggleToday('${t.id}')">
+      <div class="task-check ${isDone?'done':''}"></div>
+      <div><div class="task-name">${t.text}</div><div class="task-tag">${t.tag}</div></div>
+    </div>`;
+  }).join('');
+  document.getElementById('today-tasks').innerHTML = html;
+  const pct = all.length ? Math.round(done/all.length*100) : 0;
+  document.getElementById('today-prog-fill').style.width = pct+'%';
+  document.getElementById('today-prog-label').textContent = `${done} / ${all.length} tasks done`;
+  const d = new Date(); const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  document.getElementById('today-heading').textContent = days[d.getDay()]+"'s Mission";
+}
+
+function toggleToday(id) {
+  state.todayChecked[id] = !state.todayChecked[id];
+  if (state.todayChecked[id]) { state.totalTasks++; markTodayActive(); }
+  else state.totalTasks = Math.max(0, state.totalTasks-1);
+  save(); renderTodayTasks(); updateStats();
+}
+
+function addCustomTask() {
+  const input = document.getElementById('custom-input');
+  const val = input.value.trim();
+  if (!val) return;
+  state.customTasks.push(val); save();
+  input.value = ''; renderTodayTasks();
+  showToast('Task added!');
+}
+
+function markTodayActive() {
+  if (state.lastDate !== todayStr) {
+    const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1);
+    if (state.lastDate === yesterday.toDateString()) state.streak++;
+    else if (state.lastDate === '') state.streak = 1;
+    else state.streak = 1;
+    state.daysActive++; state.lastDate = todayStr; save();
+  }
+}
+
+// Week plan
+function renderWeekPlan(n) {
+  const w = WEEKS[n-1];
+  document.querySelectorAll('.week-pill').forEach((p,i) => p.classList.toggle('active', i===n-1));
+  document.getElementById('week-detail').innerHTML = `
+    <div class="week-info-card">
+      <div class="phase-badge" style="background:${w.color}22; color:${w.color};">${w.phase} — Week ${w.num} (${w.dates})</div>
+      <h3>Focus: ${w.focus}</h3>
+    </div>
+    <div class="section-title">Tasks this week</div>
+    ${w.tasks.map((t,i)=>`<div class="task-card">
+      <div class="task-check" style="border-color:${w.color}55;"></div>
+      <div><div class="task-name">${t}</div></div>
+    </div>`).join('')}
+  `;
+}
+
+function initWeekSelector() {
+  const wrap = document.getElementById('week-selector');
+  wrap.innerHTML = WEEKS.map(w=>`<button class="week-pill" onclick="renderWeekPlan(${w.num})">Week ${w.num}</button>`).join('');
+  renderWeekPlan(1);
+}
+
+// Stats
+function updateStats() {
+  document.getElementById('streak-num').textContent = state.streak;
+  document.getElementById('stat-sessions').textContent = state.sessions;
+  document.getElementById('stat-tasks').textContent = state.totalTasks;
+  document.getElementById('stat-hours').textContent = Math.round(state.totalMinutes/60*10)/10+'h';
+  document.getElementById('stat-days').textContent = state.daysActive;
+  document.getElementById('session-count').textContent = state.sessions;
+}
+
+// Alarms
+function renderAlarms() {
+  document.getElementById('alarm-list').innerHTML = ALARMS.map(a => {
+    const on = !!state.alarmStates[a.id];
+    return `<div class="alarm-card">
+      <div><div class="alarm-time">${a.time}</div><div class="alarm-name">${a.name}</div></div>
+      <div class="toggle ${on?'on':''}" onclick="toggleAlarm('${a.id}')"><div class="toggle-dot"></div></div>
+    </div>`;
+  }).join('');
+}
+
+function toggleAlarm(id) {
+  state.alarmStates[id] = !state.alarmStates[id];
+  save(); renderAlarms();
+  if (state.alarmStates[id]) {
+    if ('Notification' in window) {
+      Notification.requestPermission().then(p => {
+        if (p === 'granted') showToast('Reminder set!');
+        else showToast('Allow notifications in browser settings');
+      });
+    }
+    scheduleAlarms();
+  }
+}
+
+function scheduleAlarms() {
+  ALARMS.forEach(a => {
+    if (!state.alarmStates[a.id]) return;
+    const [h,m] = a.time.split(':').map(Number);
+    const now = new Date(), target = new Date();
+    target.setHours(h,m,0,0);
+    if (target <= now) target.setDate(target.getDate()+1);
+    const delay = target - now;
+    setTimeout(() => {
+      if (state.alarmStates[a.id] && 'Notification' in window && Notification.permission==='granted') {
+        new Notification('StudyFocus — Ramakrishna', { body: a.name, icon: '' });
+      }
+      showToast(a.name);
+    }, delay);
+  });
+}
+
+// Nav
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.getElementById('nav-'+name).classList.add('active');
+  if (name==='today') renderTodayTasks();
+  if (name==='stats') updateStats();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// Date
+function updateDate() {
+  const d = new Date();
+  document.getElementById('nav-date').textContent = d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+}
+
+// Init
+updateDate();
+initWeekSelector();
+renderTodayTasks();
+updateStats();
+renderAlarms();
+scheduleAlarms();
+</script>
+</body>
+</html>
